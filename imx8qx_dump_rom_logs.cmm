@@ -1,0 +1,12 @@
+; Set SCU as CPU and attach
+System.CPU IMX8QXP-SCU
+SYStem.Mode.Attach
+Break
+
+; Go get ROM log address
+Private &log_address
+&log_address = Data.long(D:0x5E0)
+ECHO &log_address
+
+data.dump &log_address
+data.SAVE.Ascii rom_log_visteon.txt SD:&log_address--(&log_address+0x200) /Long
