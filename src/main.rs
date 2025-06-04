@@ -21,7 +21,8 @@ fn main() {
     // TODO: Convert to a static map instead
     let rom_events_v3 = HashMap::from([
         ("01", EventData::new("ROM event version, bit[7:0] is the version", 0)),
-        ("02", EventData::new("Set up the boot device driver fails", 0))
+        ("02", EventData::new("Set up the boot device driver fails", 0)),
+        ("0F", EventData::new("Enters ROM error handling", 1)),
     ]);
 
     let args: Vec<String> = env::args().collect();
@@ -36,16 +37,28 @@ fn main() {
     let rom_logs = fs::read_to_string(rom_log_path)
         .expect("Unable to read the file!");
 
-    for log in rom_logs.lines() {
+    // Get iterator, cannot use for loop since we need to iterate inside the loop
+    // to process parameters
+    let mut rom_lines = rom_logs.lines();
+
+    while let Some(log) = rom_lines.next() {
         //See if log is in our events
         let id: &str = &log[..2];
         if rom_events_v3.contains_key(id) {
             let event_data = rom_events_v3.get(id);
-            println!("{id}:{}", event_data.unwrap().description);
+            println!("Event ID:{id}-{}, {} parameters", event_data.unwrap().description, event_data.unwrap().parameters);
             println!("{log}");
+            // Process parameters if any
+            for param in 0..event_data.unwrap().parameters {
+                println!("Parameter{param}");
+                if let Some(p) = rom_lines.next() {
+                    println!("{}", p);
+                }
+            }
         } else {
             println!("Unknown id!");
             println!("{log}");
         }
+        println!("");
     }
 }
