@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::collections::HashMap;
+use std::io::prelude::*;
 
 struct EventData {
     description: String,
@@ -15,7 +16,7 @@ impl EventData{
 }
 
 
-fn main() {
+fn main() -> std::io::Result<()> {
 
     // Map ROM event IDs to the events data i.e. description and number of parameters
     // TODO: Convert to a static map instead
@@ -27,15 +28,18 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    if args.len() == 1{
+    if args.len() <= 2{
         println!("Expected an argument, please call 'rom_log_decoder rom_logs_path.txt'");
-        return
+        return Ok(())
     }
 
     let rom_log_path = &args[1];
+    let decode_log_path =  &args[2];
 
     let rom_logs = fs::read_to_string(rom_log_path)
         .expect("Unable to read the file!");
+
+    let mut decode_file = fs::File::create(decode_log_path)?;
 
     // Get iterator, cannot use for loop since we need to iterate inside the loop
     // to process parameters
@@ -46,19 +50,20 @@ fn main() {
         let id: &str = &log[..2];
         if rom_events_v3.contains_key(id) {
             let event_data = rom_events_v3.get(id);
-            println!("Event ID:{id}-{}, {} parameters", event_data.unwrap().description, event_data.unwrap().parameters);
-            println!("{log}");
+            writeln!(decode_file, "Event ID:{id}-{}, {} parameters", event_data.unwrap().description, event_data.unwrap().parameters)?;
+            writeln!(decode_file, "{log}")?;
             // Process parameters if any
             for param in 0..event_data.unwrap().parameters {
-                println!("Parameter{param}");
+                writeln!(decode_file, "Parameter{param}")?;
                 if let Some(p) = rom_lines.next() {
-                    println!("{}", p);
+                    writeln!(decode_file, "{}", p)?;
                 }
             }
         } else {
-            println!("Unknown id!");
-            println!("{log}");
+            writeln!(decode_file, "Unknown id!")?;
+            writeln!(decode_file, "{log}")?;
         }
-        println!("");
+        writeln!(decode_file, " ")?;
     }
+    Ok(())
 }
