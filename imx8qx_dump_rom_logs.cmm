@@ -9,4 +9,4 @@ Private &log_address
 ECHO &log_address
 
 data.dump &log_address
-data.SAVE.Ascii rom_log_visteon.txt SD:&log_address--(&log_address+0x200) /Long
+data.SAVE.Ascii rom_log.txt SD:&log_address--(&log_address+0x200) /Long
